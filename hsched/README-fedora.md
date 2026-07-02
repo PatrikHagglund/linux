@@ -60,6 +60,18 @@ those weights (weighted-vtime between cgroups). That alone is worth observing.
 
 ## 3. The `make -j` use case (per-cgroup FIFO run-to-block)
 
+**Shortcut:** `hsched/run-build.sh` does the whole create-cgroup → load → run →
+clean-up sequence in one command:
+
+```sh
+sudo ./hsched/run-build.sh -- make -j"$(nproc)"      # build under hsched FIFO-RTB
+sudo ./hsched/run-build.sh -b -- make -j"$(nproc)"   # + a stock-scheduler baseline to compare
+sudo ./hsched/run-build.sh -w 20 -- make -j          # low weight: yields to the desktop
+```
+It prints wall-clock, context switches and cgroup CPU per run, and unloads the
+scheduler + removes the cgroup on exit. The rest of this section is the manual
+version of what it does.
+
 This is the scenario the design targets: run a big parallel build so it never
 thrashes caches or starves the desktop. Put the build in its own cgroup and mark
 that cgroup **FIFO run-to-block**.
